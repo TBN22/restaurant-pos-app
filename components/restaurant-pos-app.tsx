@@ -125,11 +125,11 @@ const paymentOptions: Array<{
   icon: LucideIcon
   label: string
 }> = [
-  { method: "cash", icon: Banknote, label: "Cash" },
-  { method: "card", icon: CreditCard, label: "Card" },
-  { method: "bank_transfer", icon: Banknote, label: "Bank" },
-  { method: "wallet", icon: WalletCards, label: "Wallet" },
-]
+    { method: "cash", icon: Banknote, label: "Cash" },
+    { method: "card", icon: CreditCard, label: "Card" },
+    { method: "bank_transfer", icon: Banknote, label: "Bank" },
+    { method: "wallet", icon: WalletCards, label: "Wallet" },
+  ]
 
 const navItems: Array<{
   id: Screen
@@ -137,15 +137,15 @@ const navItems: Array<{
   icon: React.ComponentType<React.SVGProps<SVGSVGElement>>
   adminOnly?: boolean
 }> = [
-  { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { id: "pos", label: "POS", icon: ShoppingCart },
-  { id: "menu", label: "Menu", icon: ChefHat, adminOnly: true },
-  { id: "inventory", label: "Inventory", icon: Boxes },
-  { id: "transactions", label: "Transactions", icon: ReceiptText, adminOnly: true },
-  { id: "reports", label: "Reports", icon: BarChart3, adminOnly: true },
-  { id: "users", label: "Users", icon: Users, adminOnly: true },
-  { id: "settings", label: "Settings", icon: Settings, adminOnly: true },
-]
+    { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
+    { id: "pos", label: "POS", icon: ShoppingCart },
+    { id: "menu", label: "Menu", icon: ChefHat, adminOnly: true },
+    { id: "inventory", label: "Inventory", icon: Boxes },
+    { id: "transactions", label: "Transactions", icon: ReceiptText, adminOnly: true },
+    { id: "reports", label: "Reports", icon: BarChart3, adminOnly: true },
+    { id: "users", label: "Users", icon: Users, adminOnly: true },
+    { id: "settings", label: "Settings", icon: Settings, adminOnly: true },
+  ]
 
 export function RestaurantPosApp() {
   const [loggedIn, setLoggedIn] = React.useState(false)
@@ -231,9 +231,9 @@ export function RestaurantPosApp() {
         return current.map((line) =>
           line.item.id === item.id
             ? {
-                ...line,
-                quantity: Math.min(line.quantity + 1, line.item.currentStock),
-              }
+              ...line,
+              quantity: Math.min(line.quantity + 1, line.item.currentStock),
+            }
             : line
         )
       }
@@ -247,9 +247,9 @@ export function RestaurantPosApp() {
         .map((line) =>
           line.item.id === itemId
             ? {
-                ...line,
-                quantity: Math.max(0, Math.min(quantity, line.item.currentStock)),
-              }
+              ...line,
+              quantity: Math.max(0, Math.min(quantity, line.item.currentStock)),
+            }
             : line
         )
         .filter((line) => line.quantity > 0)
@@ -534,7 +534,7 @@ function LoginScreen({
 }) {
   const hasSupabaseConfig = Boolean(
     process.env.NEXT_PUBLIC_SUPABASE_URL &&
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
   )
   const [email, setEmail] = React.useState(
     role === "admin" ? "owner@karahipos.com" : "ali@karahipos.com"
@@ -652,11 +652,11 @@ function LoginScreen({
           </CardContent>
           <CardFooter className="flex flex-col gap-3">
             <Button className="h-11 w-full" onClick={signInWithSupabase} disabled={isSigningIn}>
-              Login with Supabase
+              Login
             </Button>
-            <Button className="h-11 w-full" variant="outline" onClick={onLogin}>
+            {/* <Button className="h-11 w-full" variant="outline" onClick={onLogin}>
               Open demo as {role === "admin" ? "Admin" : "Staff"}
-            </Button>
+            </Button> */}
             <p className="text-center text-xs text-muted-foreground">
               {hasSupabaseConfig
                 ? "Use a Supabase Auth user, or open the local demo."
@@ -1036,6 +1036,26 @@ function PosScreen(props: {
   )
 }
 
+type MenuItemFormData = {
+  name: string
+  categoryId: string
+  price: string
+  costPrice: string
+  currentStock: string
+  minimumStock: string
+  status: "available" | "unavailable"
+}
+
+const emptyForm: MenuItemFormData = {
+  name: "",
+  categoryId: "salan",
+  price: "",
+  costPrice: "",
+  currentStock: "",
+  minimumStock: "",
+  status: "available",
+}
+
 function MenuScreen({
   items,
   onItemsChange,
@@ -1043,17 +1063,90 @@ function MenuScreen({
   items: MenuItem[]
   onItemsChange: (items: MenuItem[]) => void
 }) {
+  const [editingItem, setEditingItem] = React.useState<MenuItem | null>(null)
+  const [isAdding, setIsAdding] = React.useState(false)
+  const [form, setForm] = React.useState<MenuItemFormData>(emptyForm)
+
+  function openAdd() {
+    setForm(emptyForm)
+    setEditingItem(null)
+    setIsAdding(true)
+  }
+
+  function openEdit(item: MenuItem) {
+    setForm({
+      name: item.name,
+      categoryId: item.categoryId,
+      price: String(item.price),
+      costPrice: String(item.costPrice),
+      currentStock: String(item.currentStock),
+      minimumStock: String(item.minimumStock),
+      status: item.status,
+    })
+    setEditingItem(item)
+    setIsAdding(true)
+  }
+
+  function closeModal() {
+    setIsAdding(false)
+    setEditingItem(null)
+  }
+
+  function handleField<K extends keyof MenuItemFormData>(key: K, value: MenuItemFormData[K]) {
+    setForm((prev) => ({ ...prev, [key]: value }))
+  }
+
+  function handleSave() {
+    const name = form.name.trim()
+    if (!name) { toast.error("Item name is required."); return }
+    const price = Number(form.price)
+    const costPrice = Number(form.costPrice)
+    const currentStock = Number(form.currentStock)
+    const minimumStock = Number(form.minimumStock)
+    if (isNaN(price) || price < 0) { toast.error("Enter a valid selling price."); return }
+    if (isNaN(costPrice) || costPrice < 0) { toast.error("Enter a valid cost price."); return }
+    if (isNaN(currentStock) || currentStock < 0) { toast.error("Enter a valid stock quantity."); return }
+    if (isNaN(minimumStock) || minimumStock < 0) { toast.error("Enter a valid minimum stock."); return }
+
+    if (editingItem) {
+      onItemsChange(
+        items.map((entry) =>
+          entry.id === editingItem.id
+            ? { ...entry, name, categoryId: form.categoryId, price, costPrice, currentStock, minimumStock, status: form.status }
+            : entry
+        )
+      )
+      toast.success(`${name} updated.`)
+    } else {
+      const newItem: MenuItem = {
+        id: `item-${Date.now()}`,
+        name,
+        categoryId: form.categoryId,
+        price,
+        costPrice,
+        currentStock,
+        minimumStock,
+        status: form.status,
+      }
+      onItemsChange([...items, newItem])
+      toast.success(`${name} added to menu.`)
+    }
+    closeModal()
+  }
+
   function toggleStatus(item: MenuItem) {
     onItemsChange(
       items.map((entry) =>
         entry.id === item.id
-          ? {
-              ...entry,
-              status: entry.status === "available" ? "unavailable" : "available",
-            }
+          ? { ...entry, status: entry.status === "available" ? "unavailable" : "available" }
           : entry
       )
     )
+  }
+
+  function deleteItem(item: MenuItem) {
+    onItemsChange(items.filter((entry) => entry.id !== item.id))
+    toast.success(`${item.name} removed from menu.`)
   }
 
   return (
@@ -1061,8 +1154,132 @@ function MenuScreen({
       <ScreenHeading
         title="Menu management"
         description="Admin controls for pricing, availability, categories, and stock rules."
-        action={<Button><Plus data-icon="inline-start" /> Add item</Button>}
+        action={
+          <Button onClick={openAdd}>
+            <Plus data-icon="inline-start" /> Add item
+          </Button>
+        }
       />
+
+      {/* Add / Edit Modal */}
+      {isAdding && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm"
+          onClick={(e) => { if (e.target === e.currentTarget) closeModal() }}
+        >
+          <div className="w-full max-w-lg rounded-xl border bg-card shadow-2xl">
+            <div className="flex items-center justify-between border-b px-6 py-4">
+              <div>
+                <h2 className="text-lg font-semibold">{editingItem ? "Edit item" : "Add new item"}</h2>
+                <p className="text-sm text-muted-foreground">
+                  {editingItem ? `Editing ${editingItem.name}` : "Fill in the details for the new menu item."}
+                </p>
+              </div>
+              <Button variant="ghost" size="icon" onClick={closeModal}>
+                ✕
+              </Button>
+            </div>
+            <div className="flex flex-col gap-4 px-6 py-5">
+              {/* Name */}
+              <div className="flex flex-col gap-1.5">
+                <label className="text-sm font-medium">Item name</label>
+                <Input
+                  placeholder="e.g. Chicken Karahi"
+                  value={form.name}
+                  onChange={(e) => handleField("name", e.target.value)}
+                />
+              </div>
+              {/* Category */}
+              <div className="flex flex-col gap-1.5">
+                <label className="text-sm font-medium">Category</label>
+                <div className="flex flex-wrap gap-2">
+                  {categories.map((cat) => (
+                    <Button
+                      key={cat.id}
+                      size="sm"
+                      variant={form.categoryId === cat.id ? "default" : "outline"}
+                      onClick={() => handleField("categoryId", cat.id)}
+                    >
+                      {cat.name}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+              {/* Prices */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-sm font-medium">Selling price (PKR)</label>
+                  <Input
+                    type="number"
+                    min={0}
+                    placeholder="e.g. 1200"
+                    value={form.price}
+                    onChange={(e) => handleField("price", e.target.value)}
+                  />
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-sm font-medium">Cost price (PKR)</label>
+                  <Input
+                    type="number"
+                    min={0}
+                    placeholder="e.g. 760"
+                    value={form.costPrice}
+                    onChange={(e) => handleField("costPrice", e.target.value)}
+                  />
+                </div>
+              </div>
+              {/* Stock */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-sm font-medium">Current stock</label>
+                  <Input
+                    type="number"
+                    min={0}
+                    placeholder="e.g. 20"
+                    value={form.currentStock}
+                    onChange={(e) => handleField("currentStock", e.target.value)}
+                  />
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-sm font-medium">Minimum stock alert</label>
+                  <Input
+                    type="number"
+                    min={0}
+                    placeholder="e.g. 5"
+                    value={form.minimumStock}
+                    onChange={(e) => handleField("minimumStock", e.target.value)}
+                  />
+                </div>
+              </div>
+              {/* Status */}
+              <div className="flex flex-col gap-1.5">
+                <label className="text-sm font-medium">Status</label>
+                <div className="flex gap-2">
+                  <Button
+                    size="sm"
+                    variant={form.status === "available" ? "default" : "outline"}
+                    onClick={() => handleField("status", "available")}
+                  >
+                    Available
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant={form.status === "unavailable" ? "destructive" : "outline"}
+                    onClick={() => handleField("status", "unavailable")}
+                  >
+                    Unavailable
+                  </Button>
+                </div>
+              </div>
+            </div>
+            <div className="flex justify-end gap-3 border-t px-6 py-4">
+              <Button variant="outline" onClick={closeModal}>Cancel</Button>
+              <Button onClick={handleSave}>{editingItem ? "Save changes" : "Add item"}</Button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <Card>
         <CardContent className="p-0">
           <Table>
@@ -1074,7 +1291,7 @@ function MenuScreen({
                 <TableHead>Cost</TableHead>
                 <TableHead>Stock</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead className="text-right">Action</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -1084,16 +1301,33 @@ function MenuScreen({
                   <TableCell>{categoryName(item.categoryId)}</TableCell>
                   <TableCell>{currency.format(item.price)}</TableCell>
                   <TableCell>{currency.format(item.costPrice)}</TableCell>
-                  <TableCell>{item.currentStock}</TableCell>
+                  <TableCell>
+                    <span className={item.currentStock <= item.minimumStock ? "font-semibold text-destructive" : ""}>
+                      {item.currentStock}
+                    </span>
+                  </TableCell>
                   <TableCell>
                     <Badge variant={item.status === "available" ? "secondary" : "destructive"}>
                       {item.status}
                     </Badge>
                   </TableCell>
                   <TableCell className="text-right">
-                    <Button variant="outline" size="sm" onClick={() => toggleStatus(item)}>
-                      Toggle
-                    </Button>
+                    <div className="flex items-center justify-end gap-2">
+                      <Button variant="outline" size="sm" onClick={() => openEdit(item)}>
+                        Edit
+                      </Button>
+                      <Button variant="outline" size="sm" onClick={() => toggleStatus(item)}>
+                        {item.status === "available" ? "Disable" : "Enable"}
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-destructive hover:text-destructive"
+                        onClick={() => deleteItem(item)}
+                      >
+                        <Trash2 />
+                      </Button>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}
@@ -1104,6 +1338,7 @@ function MenuScreen({
     </>
   )
 }
+
 
 function InventoryScreen({
   items,

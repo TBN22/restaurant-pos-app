@@ -5,7 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 
 
 export const metadata: Metadata = {
-  title: "Karahi POS",
+  title: "Zain's Cafe POS",
   description: "Restaurant POS and inventory management system",
 };
 
